@@ -31,8 +31,7 @@ BRANCH = "main"
 
 def downloadIcons():
     # URL of the zip file on GitHub
-    branch = BRANCH
-    zip_url = f"https://github.com/voiderd-sub/trickcal-manager/raw/{branch}/icon.zip"
+    zip_url = f"https://github.com/{USERNAME}/{REPO}/raw/{BRANCH}/icon.zip"
     
     # Local file paths
     response = requests.get(zip_url)
@@ -192,7 +191,11 @@ SELECT t.comment ||" "||CASE WHEN i.piece_recipe = 1 THEN "조각" ELSE "도안"
 FROM items i
 join item_type t on (i.type = t.type_id)
 """)
-        cur.executemany("INSERT OR IGNORE INTO user_items VALUES (?,?)", [(*i, 0) for i in master_cur])
+        valid_item_names = set(i[0] for i in master_cur)
+        cur.execute("SELECT name FROM user_items")
+        user_item_names = set(i[0] for i in cur)
+        cur.executemany("INSERT INTO user_items VALUES (?,?)", ((i, 0) for i in list(valid_item_names - user_item_names)))
+        cur.executemany("DELETE FROM user_items WHERE name=?", ((i,) for i in list(user_item_names - valid_item_names)))
 
         # TODO: check user_version and add/modify columns
 
